@@ -105,12 +105,8 @@ fn do_nixos_install(nixos_installer_config: &NixOSInstallerConfig) -> Result<(),
         "--no-root-password",
         "--root",
         &nixos_installer_config.mount_path,
-        "--flake",
-        format!(
-            "{}#{}",
-            nixos_installer_config.flake_store_path, nixos_installer_config.hostname
-        )
-        .as_str(),
+        "--store-path",
+        &nixos_installer_config.nixos_system_out_path,
     ]);
     let nixos_install_cmd_process_result = log_then_output!(nixos_install_cmd);
     if did_command_exit_successfully(&nixos_install_cmd_process_result) {
