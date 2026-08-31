@@ -416,6 +416,7 @@ fn mount_root_filesystems(
         if let Some(subvolume_limit) = match non_efi_mnt_path.as_str() {
             "/" => Some("16G".to_string()),
             "/home" => Some("128G".to_string()),
+            "/tmp" => Some("256G".to_string()),
             "/var" => Some("8G".to_string()),
             _ => None,
         } {
