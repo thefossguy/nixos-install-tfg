@@ -409,7 +409,7 @@ fn mount_root_filesystems(
         let subvolume_path = format!("{}/{subvolume}", nixos_installer_config.mount_path);
         make_btrfs_subvolume(&subvolume_path)?;
 
-        if non_efi_mnt_path == "/" {
+        if non_efi_mnt_path == "/" || non_efi_mnt_path == "/tmp" {
             create_fresh_snapshot(&subvolume, &subvolume_path)?;
         }
 
