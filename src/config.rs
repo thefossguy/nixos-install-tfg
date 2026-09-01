@@ -56,6 +56,14 @@ struct VerifiedArgs {
 }
 
 #[derive(Debug)]
+pub struct FilesystemConfig {
+    pub mount_path: String,
+    pub max_size: Option<u32>,
+    pub rollbackable: bool,
+    pub sub_filesystem: String,
+}
+
+#[derive(Debug)]
 pub struct NixOSInstallerConfig {
     // gets accepted from the CLI
     pub hostname: String,
@@ -73,6 +81,7 @@ pub struct NixOSInstallerConfig {
     pub luks_device_uuid: String,
     */
     // gets evaluated at runtime
+    pub rootfs_label: String,
     pub target_drive_by_id: String,
     pub flake_store_path: String,
     pub efi_part_uuid: String,
@@ -80,7 +89,7 @@ pub struct NixOSInstallerConfig {
     pub root_part_uuid: String,
     pub root_part_mount_opts: String,
     pub root_part_fs_type: SupportedFileSystems,
-    pub non_efi_mount_paths: Vec<String>,
+    pub non_efi_mount_paths: Vec<FilesystemConfig>,
     pub nixos_system_derivation_path: String,
     pub nixos_system_out_path: String,
 }
@@ -556,10 +565,16 @@ fn evaluate_non_efi_mount_paths(
         if non_efi_mount_paths.is_empty() {
             Err("Could not determine the non-EFI partitions".into())
         } else {
-            // sort_paths
+            // sort_paths and remove trailing slashes (if any)
             let mut non_efi_mount_paths: Vec<String> = non_efi_mount_paths
                 .split(',')
-                .map(ToString::to_string)
+                .map(|path| {
+                    if path == "/" {
+                        path.to_string()
+                    } else {
+                        path.trim_end_matches('/').to_string()
+                    }
+                })
                 .collect();
             sort_paths(&mut non_efi_mount_paths, false);
             Ok(non_efi_mount_paths)
@@ -665,11 +680,40 @@ fn make_nixos_installer_config(
     )?;
     let root_part_fs_type =
         evaluate_root_part_fs_type(&verified_args.flake_store_path, &verified_args.hostname)?;
+    let rootfs_label = format!(
+        "{}{}",
+        verified_args.hostname,
+        root_part_fs_type.get_fs_label_suffix()
+    );
     let non_efi_mount_paths = evaluate_non_efi_mount_paths(
         &verified_args.flake_store_path,
         &verified_args.hostname,
         &root_part_fs_type,
-    )?;
+    )?
+    .into_iter()
+    .map(|mount_path| {
+        let (max_size, rollbackable) = match mount_path.as_str() {
+            "/" => (Some(16), true),
+            "/home" => (Some(128), false),
+            "/persistent/data" | "/persistent/state" | "/root" => (Some(1), false),
+            "/tmp" => (Some(64), true),
+            "/var" => (Some(8), false),
+            _ => (None, false),
+        };
+        let sub_filesystem = crate::disk_helpers::make_sub_filesystem_name(
+            &root_part_fs_type,
+            &rootfs_label,
+            &mount_path,
+        );
+        FilesystemConfig {
+            mount_path,
+            max_size,
+            rollbackable,
+            sub_filesystem,
+        }
+    })
+    .collect();
+
     let nixos_system_derivation_path = evaluate_nixos_system_derivation_path(
         "local:///",
         &verified_args.flake_store_path,
@@ -685,6 +729,7 @@ fn make_nixos_installer_config(
         format_partitions: verified_args.format_partitions,
         substitute_only: verified_args.substitute_only,
 
+        rootfs_label,
         target_drive_by_id: verified_args.target_drive_by_id,
         flake_store_path: verified_args.flake_store_path,
         efi_part_uuid,

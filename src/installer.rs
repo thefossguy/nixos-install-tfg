@@ -138,6 +138,5 @@ pub fn install_nixos(nixos_installer_config: &NixOSInstallerConfig) -> Result<()
 
     bootstrap_nixos(nixos_installer_config)?;
     do_nixos_install(nixos_installer_config)?;
-    crate::disk_helpers::unmount_everything(&nixos_installer_config.canonical_target_drive)?;
-    Ok(())
+    crate::disk_helpers::unmount_everything(nixos_installer_config)
 }
