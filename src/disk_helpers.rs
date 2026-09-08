@@ -525,12 +525,11 @@ fn create_fresh_snapshot(
     sub_filesystem_path: &str,
     filesystem_type: &SupportedFileSystems,
 ) -> Result<(), Box<dyn Error>> {
-    let snapshot_name_separator = ":";
-    let snapshot_name_suffix = "fresh";
+    let snapshot_name_suffix = "@:fresh";
     match filesystem_type {
         SupportedFileSystems::Zfs => {
             let snapshot_path =
-                format!("{sub_filesystem}@{snapshot_name_separator}{snapshot_name_suffix}");
+                format!("{sub_filesystem}{snapshot_name_suffix}");
             let mut zfs_cmd = Command::new("zfs");
             zfs_cmd.args(["snapshot", &snapshot_path]);
             let zfs_cmd_process_result = log_then_output!(zfs_cmd);
@@ -547,7 +546,7 @@ fn create_fresh_snapshot(
         }
         SupportedFileSystems::Btrfs => {
             let snapshot_path =
-                format!("{sub_filesystem_path}{snapshot_name_separator}{snapshot_name_suffix}");
+                format!("{sub_filesystem_path}{snapshot_name_suffix}");
             let mut btrfs_cmd = Command::new("btrfs");
             btrfs_cmd.args([
                 "subvolume",
