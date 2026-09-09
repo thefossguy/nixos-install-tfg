@@ -251,7 +251,7 @@ fn partition_target_drive(
             "primary",
             "fat32",
             "128MiB",
-            "1152MiB",
+            "2176MiB",
             "set",
             "1",
             "esp",
@@ -259,7 +259,7 @@ fn partition_target_drive(
             "mkpart",
             "primary",
             "ext4",
-            "1153MiB",
+            "2177MiB",
             "100%",
         ]);
         let parted_cmd_process_result = log_then_output!(parted_cmd);
