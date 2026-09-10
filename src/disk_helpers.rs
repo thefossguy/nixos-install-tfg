@@ -444,6 +444,8 @@ fn make_root_filesystem(
                             "-o",
                             "checksum=sha512",
                             "-o",
+                            "readonly=off",
+                            "-o",
                             "compression=zstd-19",
                         ])
                         .args(&refquota_args)
