@@ -410,11 +410,13 @@ fn get_target_drive_by_id(canonical_target_drive: &str) -> Result<String, Box<dy
 
 fn verify_args(
     current_args: MandatoryArgsUnwrapped,
-    mount_path: String,
+    mount_path: Option<String>,
 ) -> Result<VerifiedArgs, Box<dyn Error>> {
     verify_hostname(&current_args.hostname, &current_args.flake_store_path)?;
     verify_target_drive(&current_args.canonical_target_drive)?;
     let target_drive_by_id = get_target_drive_by_id(&current_args.canonical_target_drive)?;
+    let mount_path: String =
+        mount_path.unwrap_or_else(|| format!("/mnt/installer-{}", current_args.hostname));
 
     Ok(VerifiedArgs {
         hostname: current_args.hostname,
@@ -750,7 +752,7 @@ pub fn configure() -> Result<NixOSInstallerConfig, Box<dyn Error>> {
 
     let mut hostname = None;
     let mut canonical_target_drive = None;
-    let mut mount_path = "/mnt".to_string();
+    let mut mount_path = None;
     let mut partition_drive = None;
     let mut format_partitions = None;
     let mut substitute_only = None;
@@ -765,7 +767,7 @@ pub fn configure() -> Result<NixOSInstallerConfig, Box<dyn Error>> {
             Long("hostname") => hostname = Some(lexopt_parser.value()?.string()?),
             Long("target-drive") => canonical_target_drive = Some(lexopt_parser.value()?.string()?),
             Long("flake-path") => flake_path = Some(lexopt_parser.value()?.string()?),
-            Long("mount-path") => mount_path = lexopt_parser.value()?.string()?,
+            Long("mount-path") => mount_path = Some(lexopt_parser.value()?.string()?),
 
             Long("update-lockfile") => update_lockfile = true,
             Long("no-update-lockfile") => update_lockfile = false,
