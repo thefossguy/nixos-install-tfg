@@ -699,6 +699,7 @@ fn make_nixos_installer_config(
             "/etc/nixos" => (Some(1), false),
             "/home" => (Some(128), false),
             "/persistent/data" | "/persistent/state" | "/root" => (Some(1), false),
+            "/srv" => (Some(1), false),
             "/tmp" => (Some(64), true),
             "/var" => (Some(8), false),
             _ => (None, false),
