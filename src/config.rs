@@ -696,6 +696,7 @@ fn make_nixos_installer_config(
     .map(|mount_path| {
         let (max_size, rollbackable) = match mount_path.as_str() {
             "/" => (Some(1), true),
+            "/etc/nixos" => (Some(1), false),
             "/home" => (Some(128), false),
             "/persistent/data" | "/persistent/state" | "/root" => (Some(1), false),
             "/tmp" => (Some(64), true),
